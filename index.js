@@ -65,7 +65,7 @@ const signInUser = async (req, res) => {
 const router = express.Router();
 
 router.post('/users', signUpUser);
-router.post('/users/signin', signInUser);
+router.get('/users/signin', signInUser);
 app.use(express.json()); // For getting data from Front-End
 app.use(cors()); // For CORS Policy
 app.use(router);
