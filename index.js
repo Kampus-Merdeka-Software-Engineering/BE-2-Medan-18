@@ -19,6 +19,21 @@ const User = db.define("user", {
     password: { type: DataTypes.STRING },
 });
 
+const History = db.define("history", {
+    historyID: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    date: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    userID: { type: DataTypes.INTEGER, allowNull: false },
+    name: { type: DataTypes.STRING, allowNull: false },
+    phoneNumber: { type: DataTypes.STRING, allowNull: false },
+    address: { type: DataTypes.STRING, allowNull: false },
+    accountNumber: { type: DataTypes.STRING, allowNull: false },
+    pinOrCvv: { type: DataTypes.STRING, allowNull: false },
+    listCart: { type: DataTypes.JSON, allowNull: false },
+});
+
+User.hasMany(History, { foreignKey: 'userID' });
+History.belongsTo(User, { foreignKey: 'userID' });
+
 const signUpUser = async (req, res) => {
     try { // Check if the email already exists
         const existingUser = await User.findOne({
@@ -74,12 +89,44 @@ const signInUser = async (req, res) => {
     }
 };
 
+const addToHistory = async (req, res) => {
+    try {
+        const userID = req.body.userID;
+        const user = await User.findByPk(userID);
+
+        if (!user) {
+            res.status(404).json({ error: "User not found" });
+            return;
+        }
+
+        const { name, phoneNumber, address, accountNumber, pinOrCvv, listCart } = req.body;
+        const hashedPinOrCvv = await bcrypt.hash(pinOrCvv, 10); // Hash the PIN or CVV
+
+        await History.create({
+            userID,
+            name,
+            phoneNumber,
+            address,
+            accountNumber,
+            pinOrCvv: hashedPinOrCvv,
+            listCart,
+        });
+
+        res.status(201).json({ msg: "History Added Successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+
 const router = express.Router();
 
 router.post('/users/signup/', signUpUser);
 router.post('/users/register/', signUpUser); // Alternative
 router.get('/users/signin', signInUser);
 router.get('/users/login', signInUser); // Alternative
+router.post('/users/checkout', addToHistory);
+
 app.use(express.json()); // For getting data from Front-End
 app.use(cors()); // For CORS Policy
 app.use(router);
