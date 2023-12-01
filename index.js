@@ -62,7 +62,7 @@ const signUpUser = async (req, res) => {
 const signInUser = async (req, res) => {
     try {
         const user = await User.findOne({
-            // Find the user by email // and password
+            // Find the user by email
             where: {
                 email: req.body.email,
             },
@@ -118,6 +118,41 @@ const addToHistory = async (req, res) => {
     }
 };
 
+// Add a new endpoint to retrieve history details based on userID
+const getHistoryByUserID = async (req, res) => {
+    try {
+        const userID = req.body.userID;
+
+        // Check if the user exists
+        const user = await User.findByPk(userID);
+        if (!user) {
+            res.status(404).json({ error: "User not found" });
+            return;
+        }
+
+        // Retrieve all history details for the given user
+        const historyDetails = await History.findAll({
+            where: { userID },
+            attributes: ['historyID', 'date', 'name', 'phoneNumber', 'address', 'listCart'],
+            order: [['date', 'DESC']], // Order by date in descending order (latest first)
+        });
+
+        // Map the array of history records to extract relevant details
+        const formattedHistory = historyDetails.map(history => ({
+            historyID: history.historyID,
+            date: history.date,
+            name: history.name,
+            phoneNumber: history.phoneNumber,
+            address: history.address,
+            listCart: history.listCart,
+        }));
+
+        res.status(200).json(formattedHistory);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
 
 const router = express.Router();
 
@@ -126,6 +161,7 @@ router.post('/users/register/', signUpUser); // Alternative
 router.get('/users/signin', signInUser);
 router.get('/users/login', signInUser); // Alternative
 router.post('/users/checkout', addToHistory);
+router.get('/users/history', getHistoryByUserID);
 
 app.use(express.json()); // For getting data from Front-End
 app.use(cors()); // For CORS Policy
