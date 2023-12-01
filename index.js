@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { Sequelize } from "sequelize";
 import { DataTypes } from "sequelize";
+import bcrypt from "bcrypt"; // Import bcrypt
 
 const app = express();
 const port = 3000;
@@ -10,12 +11,14 @@ const db = new Sequelize("dirac", "root", "G43r0W3s5!", {
     dialect: "mysql",
     port: 3306,
 });
+
 const User = db.define("user", {
     userID: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     name: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
 });
+
 const signUpUser = async (req, res) => {
     console.log(req.body);
     try { // Check if the email already exists
@@ -28,10 +31,12 @@ const signUpUser = async (req, res) => {
         if (existingUser) { // Email already exists, send a response indicating that
             res.status(400).json({ error: "Email is already in use" });
         } else { // Email doesn't exist, create a new user
+            // Hash the password before storing it
+            const hashedPassword = await bcrypt.hash(req.body.password, 10);
             const user = await User.create({
                 name: req.body.name,
                 email: req.body.email,
-                password: req.body.password,
+                password: hashedPassword, // Store hashed password
             });
             res.status(201).json({ msg: "User Created" });
         }
@@ -39,19 +44,28 @@ const signUpUser = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
+
 const signInUser = async (req, res) => {
     try {
         const user = await User.findOne({
-            // Find the user by email and password
+            // Find the user by email // and password
             where: {
                 email: req.body.email,
-                password: req.body.password,
+                // password: req.body.password,
             },
         });
 
         if (!user) {
             // User not found
-            res.status(401).json({ error: "Invalid email or password" });
+            res.status(401).json({ error: "Invalid email" });
+            return;
+        }
+        
+        // Compare the entered password with the hashed password in the database
+        const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+
+        if (!isPasswordValid) {
+            res.status(401).json({ error: "Invalid Password" });
             return;
         }
         
