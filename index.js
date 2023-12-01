@@ -20,7 +20,6 @@ const User = db.define("user", {
 });
 
 const signUpUser = async (req, res) => {
-    console.log(req.body);
     try { // Check if the email already exists
         const existingUser = await User.findOne({
             where: {
@@ -51,13 +50,12 @@ const signInUser = async (req, res) => {
             // Find the user by email // and password
             where: {
                 email: req.body.email,
-                // password: req.body.password,
             },
         });
 
         if (!user) {
             // User not found
-            res.status(401).json({ error: "Invalid email" });
+            res.status(401).json({ error: "Invalid Email" });
             return;
         }
         
@@ -78,8 +76,10 @@ const signInUser = async (req, res) => {
 
 const router = express.Router();
 
-router.post('/users', signUpUser);
+router.post('/users/signup/', signUpUser);
+router.post('/users/register/', signUpUser); // Alternative
 router.get('/users/signin', signInUser);
+router.get('/users/login', signInUser); // Alternative
 app.use(express.json()); // For getting data from Front-End
 app.use(cors()); // For CORS Policy
 app.use(router);
