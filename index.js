@@ -5,11 +5,14 @@ import { DataTypes } from "sequelize";
 import bcrypt from "bcrypt"; // Import bcrypt
 
 const app = express();
-const port = 3000;
-const db = new Sequelize("dirac", "root", "G43r0W3s5!", {
-    host: "localhost",
-    dialect: "mysql",
-    port: 3306,
+const port = process.env.PORT;
+const db = new Sequelize(
+    process.env.DATABSE_NAME,
+    process.env.DATABSE_USERNAME,
+    process.env.DATABSE_PASSWORD, {
+        host: process.env.DATABASE_HOST,
+        dialect: "mysql",
+        port: process.env.DATABASE_PORT,
 });
 
 const User = db.define("user", {
@@ -41,7 +44,7 @@ const signUpUser = async (req, res) => {
                 email: req.body.email,
             },
         });
-        
+
         if (existingUser) { // Email already exists, send a response indicating that
             res.status(400).json({ error: "Email is already in use" });
         } else { // Email doesn't exist, create a new user
@@ -73,7 +76,7 @@ const signInUser = async (req, res) => {
             res.status(401).json({ error: "Invalid Email" });
             return;
         }
-        
+
         // Compare the entered password with the hashed password in the database
         const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
 
@@ -81,7 +84,7 @@ const signInUser = async (req, res) => {
             res.status(401).json({ error: "Invalid Password" });
             return;
         }
-        
+
         // If email and password are valid, consider the user as authenticated
         res.status(200).json({ userID: user.userID });
     } catch (error) {
