@@ -126,7 +126,7 @@ const addToHistory = async (req, res) => {
 // Add a new endpoint to retrieve history details based on userID
 const getHistoryByUserID = async (req, res) => {
     try {
-        const userID = req.body.userID;
+        const userID = req.query.userID;
 
         // Check if the user exists
         const user = await User.findByPk(userID);
@@ -161,10 +161,8 @@ const getHistoryByUserID = async (req, res) => {
 
 const router = express.Router();
 
-router.post('/users/signup/', signUpUser);
-router.post('/users/register/', signUpUser); // Alternative
-router.get('/users/signin', signInUser);
-router.get('/users/login', signInUser); // Alternative
+router.post('/users/register', signUpUser);
+router.post('/users/login', signInUser);
 router.post('/users/checkout', addToHistory);
 router.get('/users/history', getHistoryByUserID);
 
